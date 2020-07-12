@@ -1,0 +1,46 @@
+{
+    "libraries": [
+        {
+            "id": 1,
+            "name": "The central library",
+            "city": "London",
+            "books": [
+                {
+                    "id": 1,
+                    "title": "C++ for professional",
+                    "units": 5
+                },
+                {
+                    "id": 2,
+                    "title": "Introduction to Go lang",
+                    "units": 10,
+                    "attributes": {
+                        "condition": "new"
+                    }
+                }
+
+            ]
+        },
+        {
+            "id": 2,
+            "name": "Stockholm Stadsbibliotek",
+            "city": "Stockholm",
+            "books": [
+                {
+                    "id": 1,
+                    "title": "C++ for professional",
+                    "units": 10
+                },
+                {
+                    "id": 2,
+                    "title": "Effective Java",
+                    "units": 15,
+                    "attributes": {
+                        "demand": "medium"
+                    }
+                }
+
+            ]
+        }
+    ]
+}
