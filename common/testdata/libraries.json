@@ -15,7 +15,8 @@
                     "title": "Introduction to Go lang",
                     "units": 10,
                     "attributes": {
-                        "condition": "new"
+                        "condition": "new",
+                        "demand": "high"
                     }
                 }
 

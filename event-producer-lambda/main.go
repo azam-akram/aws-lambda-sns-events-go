@@ -12,33 +12,37 @@ import (
 
 func handleRequest() (model.Libraries, error) {
 
-	libraryJSON := stringToJSONObject()
-	fmt.Println(libraryJSON)
+	jsonByte := readJsonFile(c.LibrariesJSONPath)
+
+	libraryJSON := bytesToJSONObject(jsonByte)
+	fmt.Printf("Libray data: %s", libraryJSON)
 
 	// Publish this JSON to SNS
 
 	return model.Libraries{Libraries: nil}, nil
 }
 
-func stringToJSONObject() model.Libraries {
-
-	byteValue, errReadFile := ioutil.ReadFile(c.LibrariesJSONPath)
-	if errReadFile != nil {
-		log.Fatal(errReadFile)
+func readJsonFile(path string) (jsonByte []byte) {
+	byteValue, err := ioutil.ReadFile(path)
+	if err != nil {
+		log.Fatal(err) // TODO: better logging
 	}
+	return byteValue
+}
+
+func bytesToJSONObject(byteValue []byte) model.Libraries {
 
 	var libraries model.Libraries
-
-	errJSONUnmarshall := json.Unmarshal(byteValue, &libraries)
-	if errJSONUnmarshall != nil {
-		log.Fatal(errReadFile)
+	err := json.Unmarshal(byteValue, &libraries)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	for i := 0; i < len(libraries.Libraries); i++ {
+	/*for i := 0; i < len(libraries.Libraries); i++ {
 		fmt.Println("Id: ", libraries.Libraries[i].ID)
 		fmt.Println("Name: ", libraries.Libraries[i].Name)
 		fmt.Println("City: ", libraries.Libraries[i].City)
-	}
+	}*/
 
 	return libraries
 }
