@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 
+	"github.com/aws/aws-lambda-go/lambda"
 	c "github.com/azam-akram/aws-lambda-sns-events-go/common/constant"
 	"github.com/azam-akram/aws-lambda-sns-events-go/common/model"
 )
@@ -15,7 +16,7 @@ func handleRequest() (model.Libraries, error) {
 	jsonByte := readJsonFile(c.LibrariesJSONPath)
 
 	libraryJSON := bytesToJSONObject(jsonByte)
-	fmt.Printf("Libray data: %s", libraryJSON)
+	fmt.Println(libraryJSON)
 
 	// Publish this JSON to SNS
 
@@ -38,17 +39,9 @@ func bytesToJSONObject(byteValue []byte) model.Libraries {
 		log.Fatal(err)
 	}
 
-	/*for i := 0; i < len(libraries.Libraries); i++ {
-		fmt.Println("Id: ", libraries.Libraries[i].ID)
-		fmt.Println("Name: ", libraries.Libraries[i].Name)
-		fmt.Println("City: ", libraries.Libraries[i].City)
-	}*/
-
 	return libraries
 }
 
 func main() {
-	//lambda.Start(HandleLambdaEvent)
-
-	handleRequest()
+	lambda.Start(handleRequest)
 }
