@@ -52,7 +52,7 @@
         "Type": "AWS::Lambda::Function",
         "Properties": {
           "Code": {
-            "S3Bucket": "rbme-dev-misc",
+            "S3Bucket": "mu-s3-bucket",
             "S3Key": "event-producer-lambda"
           },
           "Description": {
