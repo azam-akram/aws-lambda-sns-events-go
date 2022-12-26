@@ -21,9 +21,6 @@
 *.log
 Collection
 
-#Dependencies
-vendor
-
 # Configurations
 .env
 

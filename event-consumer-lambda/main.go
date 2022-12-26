@@ -1,37 +1,42 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
+	"context"
+	"log"
+	"time"
 
-	c "github.com/azam-akram/aws-lambda-sns-events-go/common/constant"
+	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/azam-akram/aws-lambda-sns-events-go/common/model"
+	"github.com/azam-akram/aws-lambda-sns-events-go/common/utils"
 )
 
-func handleRequest(libraries model.Libraries) {
+func HandleRequest(ctx context.Context, event *model.Event) error {
+	log.Println("Request received: ", event)
 
-	JSONToString(libraries)
-
-}
-
-func JSONToString(libraries model.Libraries) {
-
-	marshalledJSON, err := json.Marshal(libraries)
-	if err != nil {
-		fmt.Println(err)
-		return
+	outputEvent := model.Event{
+		ID:        event.ID,
+		Name:      "SumCompleted",
+		Source:    "Calculator",
+		EventTime: time.Now().Format(time.RFC3339),
+		Payload: model.Payload{
+			Number1: event.Payload.Number1,
+			Number2: event.Payload.Number2,
+			Answer:  event.Payload.Number1 + event.Payload.Number2,
+		},
 	}
 
-	fmt.Println(string(marshalledJSON))
+	log.Println("Event to publish:", outputEvent)
+
+	msgId, err := utils.PublishEvent(ctx, &outputEvent)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("Event published to SNS, msgId = ", msgId)
+
+	return nil
 }
 
 func main() {
-
-	byteValue, _ := ioutil.ReadFile(c.LibrariesJSONPath)
-	var libraries model.Libraries
-	json.Unmarshal(byteValue, &libraries)
-
-	handleRequest(libraries)
-	//lambda.Start(handleRequest)
+	lambda.Start(HandleRequest)
 }
