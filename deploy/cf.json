@@ -1,8 +1,8 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
     "Description": "A CF template to create a lambda functions and SNS topic",
-    "Parameters": {
-        "pArnSnsTopic": {
+    "Parameters": {     
+        "pSnsTopicName": {
             "Type": "String"
         },
         "pLambdaCodeBucket": {
@@ -16,8 +16,19 @@
         }
     },
     "Resources": {
+        "MyDemoSNSTopic": {
+            "Type": "AWS::SNS::Topic",
+            "Properties": {
+                "TopicName": {
+                    "Ref": "pSnsTopicName"
+                }
+            }
+        },
         "lfnLambdaRole": {
             "Type": "AWS::IAM::Role",
+            "DependsOn": [
+                "MyDemoSNSTopic"
+            ],
             "Properties": {
                 "AssumeRolePolicyDocument": {
                     "Version": "2012-10-17",
@@ -58,7 +69,7 @@
                                         "SNS:Publish"
                                     ],
                                     "Resource": {
-                                        "Ref": "pArnSnsTopic"
+                                        "Fn::Sub": "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${pSnsTopicName}"
                                     }
                                 }
                             ]
@@ -73,6 +84,13 @@
                 "lfnLambdaRole"
             ],
             "Properties": {
+                "Environment": {
+                    "Variables": {
+                        "SNS_TOPIC_ARN": {
+                            "Fn::Sub": "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${pSnsTopicName}"
+                        }
+                    }
+                },
                 "Architectures": [
                     "x86_64"
                 ],
@@ -103,6 +121,13 @@
                 "lfnLambdaRole"
             ],
             "Properties": {
+                "Environment": {
+                    "Variables": {
+                        "SNS_TOPIC_ARN": {
+                            "Fn::Sub": "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${pSnsTopicName}"
+                        }
+                    }
+                },
                 "Architectures": [
                     "x86_64"
                 ],
@@ -127,9 +152,72 @@
                 "Timeout": "120"
             }
         },
-        "snsSubscription": {
+        "snsPermInvokeProducer": {
+            "Type": "AWS::Lambda::Permission",
+            "DependsOn": [
+                "lfnEventProducer"
+            ],
+            "Properties": {
+                "Action": "lambda:InvokeFunction",
+                "FunctionName": {
+                    "Fn::GetAtt": [
+                        "lfnEventProducer",
+                        "Arn"
+                    ]
+                },
+                "Principal": "sns.amazonaws.com",
+                "SourceArn": {
+                    "Fn::Sub": "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${pSnsTopicName}"
+                }
+            }
+        },
+        "snsPermInvokeConsumer": {
+            "Type": "AWS::Lambda::Permission",
+            "DependsOn": [
+                "lfnEventConsumer"
+            ],
+            "Properties": {
+                "Action": "lambda:InvokeFunction",
+                "FunctionName": {
+                    "Fn::GetAtt": [
+                        "lfnEventConsumer",
+                        "Arn"
+                    ]
+                },
+                "Principal": "sns.amazonaws.com",
+                "SourceArn": {
+                    "Fn::Sub": "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${pSnsTopicName}"
+                }
+            }
+        },
+        "snsSubscriptionProducer": {
             "Type": "AWS::SNS::Subscription",
             "DependsOn": [
+                "MyDemoSNSTopic",
+                "lfnEventProducer"
+            ],
+            "Properties": {
+                "Endpoint": {
+                    "Fn::GetAtt": [
+                        "lfnEventProducer",
+                        "Arn"
+                    ]
+                },
+                "FilterPolicy": {
+                    "name": [
+                        "SumCompleted"
+                    ]
+                },
+                "Protocol": "lambda",
+                "TopicArn": {
+                    "Fn::Sub": "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${pSnsTopicName}"
+                }
+            }
+        },
+        "snsSubscriptionConsumer": {
+            "Type": "AWS::SNS::Subscription",
+            "DependsOn": [
+                "MyDemoSNSTopic",
                 "lfnEventConsumer"
             ],
             "Properties": {
@@ -146,26 +234,7 @@
                 },
                 "Protocol": "lambda",
                 "TopicArn": {
-                    "Ref": "pArnSnsTopic"
-                }
-            }
-        },
-        "snsInvokeLambdaPermission": {
-            "Type": "AWS::Lambda::Permission",
-            "DependsOn": [
-                "lfnEventConsumer"
-            ],
-            "Properties": {
-                "Action": "lambda:InvokeFunction",
-                "FunctionName": {
-                    "Fn::GetAtt": [
-                        "lfnEventConsumer",
-                        "Arn"
-                    ]
-                },
-                "Principal": "apigateway.amazonaws.com",
-                "SourceArn": {
-                    "Ref": "pArnSnsTopic"
+                    "Fn::Sub": "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${pSnsTopicName}"
                 }
             }
         }

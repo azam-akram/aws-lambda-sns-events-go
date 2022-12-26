@@ -1,4 +1,5 @@
 # github.com/aws/aws-lambda-go v1.23.0
+github.com/aws/aws-lambda-go/events
 github.com/aws/aws-lambda-go/lambda
 github.com/aws/aws-lambda-go/lambda/handlertrace
 github.com/aws/aws-lambda-go/lambda/messages
