@@ -25,12 +25,6 @@ func getSNSTopicARN() string {
 }
 
 func PublishEvent(ctx context.Context, event *model.Event) (msgId string, err error) {
-	eventBytes, err := json.Marshal(event)
-	if nil != err {
-		return "", err
-	}
-
-	payload := string(eventBytes)
 	region := getAWSRegion()
 	awsConfig := &aws.Config{
 		Region: &region,
@@ -40,8 +34,13 @@ func PublishEvent(ctx context.Context, event *model.Event) (msgId string, err er
 	if err != nil {
 		return "", err
 	}
-
 	snsClient := sns.New(snsSession)
+
+	eventBytes, err := json.Marshal(event)
+	if nil != err {
+		return "", err
+	}
+	payload := string(eventBytes)
 
 	snsInput := &sns.PublishInput{
 		Message:  aws.String(payload),
