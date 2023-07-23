@@ -1,0 +1,91 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: A cloudformation template to create a calculation requester lambda functions and SNS topic
+Parameters:
+  pSnsTopicArn:
+    Type: String
+  pLambdaCodeBucket:
+    Type: String
+  pRequesterCodeS3KeyPath:
+    Type: String
+Resources:
+  lfnLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+      Policies:
+      - PolicyName: lambdaCloudWatchPolicy
+        PolicyDocument:
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource: "*"
+      - PolicyName: snsPublish
+        PolicyDocument:
+          Statement:
+          - Effect: Allow
+            Action:
+            - SNS:Publish
+            Resource:
+              Ref: pSnsTopicArn
+  lfnCalcRequester:
+    Type: AWS::Lambda::Function
+    DependsOn:
+    - lfnLambdaRole
+    Properties:
+      Environment:
+        Variables:
+          SNS_TOPIC_ARN:
+            Ref: pSnsTopicArn
+      Architectures:
+      - x86_64
+      Runtime: go1.x
+      Handler: main
+      Code:
+        S3Bucket: !Ref pLambdaCodeBucket
+        S3Key: !Ref pRequesterCodeS3KeyPath
+      Description: This is calculation requester lambda function
+      FunctionName: calculation-requester-lambda
+      Role:
+        Fn::GetAtt:
+        - lfnLambdaRole
+        - Arn
+      Timeout: '120'
+  snsPermInvokeCalcRequester:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+    - lfnCalcRequester
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+        - lfnCalcRequester
+        - Arn
+      Principal: sns.amazonaws.com
+      SourceArn:
+        Ref: pSnsTopicArn
+  snsSubscriptionCalcRequester:
+    Type: AWS::SNS::Subscription
+    DependsOn:
+    - lfnCalcRequester
+    Properties:
+      Endpoint:
+        Fn::GetAtt:
+        - lfnCalcRequester
+        - Arn
+      FilterPolicy:
+        name:
+        - SumCompleted
+        - StartingEvent
+      Protocol: lambda
+      TopicArn:
+        Ref: pSnsTopicArn

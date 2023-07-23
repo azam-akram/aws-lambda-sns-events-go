@@ -9,7 +9,6 @@ type Event struct {
 }
 
 type Payload struct {
-	Number1 int `json:"number1,omitempty"`
-	Number2 int `json:"number2,omitempty"`
-	Answer  int `json:"Num1,omitempty"`
+	Numbers []int `json:"numbers,omitempty"`
+	Sum     int   `json:"sum,omitempty"`
 }
